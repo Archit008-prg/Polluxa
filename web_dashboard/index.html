@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polluxa - LinkedIn Agent Analytics Platform</title>
+    <!-- Google Fonts & Chart.js -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-icon">✦</div>
+                <div class="brand-text">
+                    <h2>Polluxa</h2>
+                    <span>Agent Analytics</span>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#overview" class="nav-item active" id="nav-overview">
+                    <span class="icon">📊</span> Executive Overview
+                </a>
+                <a href="#health" class="nav-item" id="nav-health">
+                    <span class="icon">🛡️</span> Agent Risk & Health
+                </a>
+                <a href="#campaigns" class="nav-item" id="nav-campaigns">
+                    <span class="icon">🎯</span> Campaign ROI
+                </a>
+                <a href="#quality" class="nav-item" id="nav-quality">
+                    <span class="icon">✅</span> Data Governance
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <span class="status-dot online"></span>
+                    <span>Pipeline Active</span>
+                </div>
+                <div class="watermark-info" id="watermark-display">
+                    Watermark: 2026-08-19 14:00 UTC
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header Bar -->
+            <header class="top-header">
+                <div class="page-title">
+                    <h1 id="current-view-title">Executive Analytics Dashboard</h1>
+                    <p>Real-time outreach KPIs, risk anomaly scoring, and account capacity management</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="btn-refresh-data">🔄 Refresh Data</button>
+                    <button class="btn btn-primary" id="btn-run-demo">⚡ Run Resilience Demo</button>
+                </div>
+            </header>
+
+            <!-- Overview Section -->
+            <section class="dashboard-section" id="section-overview">
+                <!-- KPI Grid -->
+                <div class="kpi-grid">
+                    <div class="kpi-card glass">
+                        <div class="kpi-icon blue">📩</div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Total Invites Sent</span>
+                            <h3 class="kpi-value" id="kpi-invites">1,450</h3>
+                            <span class="kpi-trend positive">+12% vs last week</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass">
+                        <div class="kpi-icon green">🤝</div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Acceptance Rate</span>
+                            <h3 class="kpi-value" id="kpi-acc-rate">38.4%</h3>
+                            <span class="kpi-trend positive">Above SLA Target (35%)</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass">
+                        <div class="kpi-icon purple">💬</div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Reply Rate</span>
+                            <h3 class="kpi-value" id="kpi-reply-rate">24.1%</h3>
+                            <span class="kpi-trend positive">+3.2% optimization</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass">
+                        <div class="kpi-icon orange">⚠️</div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Avg Anomaly Score</span>
+                            <h3 class="kpi-value" id="kpi-anomaly">0.82</h3>
+                            <span class="kpi-badge badge-normal">Minimal Risk</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Charts Grid -->
+                <div class="charts-grid">
+                    <div class="chart-card glass span-2">
+                        <div class="chart-header">
+                            <h3>Outreach Event Performance Trend</h3>
+                            <span class="subtitle">Daily Invites, Accepts, Messages, and Replies</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card glass">
+                        <div class="chart-header">
+                            <h3>Agent Account Status</h3>
+                            <span class="subtitle">Active vs Paused vs Ghosted</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Agent Risk & Health Section -->
+            <section class="dashboard-section hidden" id="section-health">
+                <div class="charts-grid">
+                    <div class="chart-card glass span-2">
+                        <div class="chart-header">
+                            <h3>Agent Anomaly Score & Risk Matrix</h3>
+                            <span class="subtitle">Statistical Z-Score vs Account Age Tier Ceilings</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" id="agent-table">
+                                <thead>
+                                    <tr>
+                                        <th>Agent Name</th>
+                                        <th>Account Tier</th>
+                                        <th>Risk Class</th>
+                                        <th>Invites Sent</th>
+                                        <th>Accept Rate</th>
+                                        <th>Anomaly Score</th>
+                                        <th>Status</th>
+                                        <th>Rec. Daily Limit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic agent rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card glass">
+                        <div class="chart-header">
+                            <h3>Capacity Utilization</h3>
+                            <span class="subtitle">Daily Ceiling vs Actual Activity</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="utilizationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Campaign ROI Section -->
+            <section class="dashboard-section hidden" id="section-campaigns">
+                <div class="charts-grid">
+                    <div class="chart-card glass span-2">
+                        <div class="chart-header">
+                            <h3>Campaign Conversion Funnel</h3>
+                            <span class="subtitle">Invites -> Accepts -> Messages -> Replies</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="campaignChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card glass">
+                        <div class="chart-header">
+                            <h3>Industry Breakdown</h3>
+                            <span class="subtitle">Target Segment Performance</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="segmentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Governance Section -->
+            <section class="dashboard-section hidden" id="section-quality">
+                <div class="kpi-grid">
+                    <div class="kpi-card glass">
+                        <div class="kpi-info">
+                            <span class="kpi-label">Composite DQ Score</span>
+                            <h3 class="kpi-value text-green" id="dq-score">96.8%</h3>
+                            <span class="kpi-trend positive">SLA Threshold: 90.0%</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass">
+                        <div class="kpi-info">
+                            <span class="kpi-label">Completeness</span>
+                            <h3 class="kpi-value">99.2%</h3>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass">
+                        <div class="kpi-info">
+                            <span class="kpi-label">Uniqueness</span>
+                            <h3 class="kpi-value">100.0%</h3>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass">
+                        <div class="kpi-info">
+                            <span class="kpi-label">Dead Letter Records</span>
+                            <h3 class="kpi-value text-orange" id="dlq-count">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-card glass margin-top">
+                    <div class="chart-header">
+                        <h3>Historical Data Quality Audit Log</h3>
+                        <span class="subtitle">5-Point Verification Results per Pipeline Run</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="dq-table">
+                            <thead>
+                                <tr>
+                                    <th>Check ID</th>
+                                    <th>Run ID</th>
+                                    <th>Timestamp</th>
+                                    <th>Completeness</th>
+                                    <th>Uniqueness</th>
+                                    <th>Validity</th>
+                                    <th>Timeliness</th>
+                                    <th>Ref Integrity</th>
+                                    <th>Composite DQ Score</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Dynamic DQ history rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
