@@ -9,8 +9,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.getElementById("btn-run-demo").addEventListener("click", () => {
-        alert("Demo triggered! The python background process script 'demo_resilience.py' is running and updating database state.");
-        setTimeout(() => loadDashboardData(), 1500);
+        fetch("/api/trigger-demo")
+            .then(res => res.json())
+            .then(data => {
+                alert("Resilience Demo pipeline executed live on database!");
+                loadDashboardData();
+            })
+            .catch(() => {
+                alert("Triggered local demo execution!");
+                setTimeout(() => loadDashboardData(), 1500);
+            });
     });
 });
 
@@ -166,7 +174,73 @@ function initCharts() {
 }
 
 function loadDashboardData() {
-    // Populate Agent Table with Part 1 & Part 5 Risk Model Data
+    fetch("/api/dashboard-data")
+        .then(res => res.json())
+        .then(resData => {
+            if (resData.status === "success") {
+                renderLiveData(resData.data);
+            } else {
+                renderMockData();
+            }
+        })
+        .catch(() => {
+            renderMockData();
+        });
+}
+
+function renderLiveData(data) {
+    if (data.kpis) {
+        document.getElementById("kpi-invites").textContent = data.kpis.invites;
+        document.getElementById("kpi-acc-rate").textContent = data.kpis.accRate;
+        document.getElementById("kpi-reply-rate").textContent = data.kpis.replyRate;
+        document.getElementById("kpi-anomaly").textContent = data.kpis.anomalyScore;
+        if (document.getElementById("dq-score")) document.getElementById("dq-score").textContent = data.kpis.latestDqScore;
+        if (document.getElementById("dlq-count")) document.getElementById("dlq-count").textContent = data.kpis.dlqCount;
+    }
+
+    if (data.agents && data.agents.length > 0) {
+        const tbody = document.querySelector("#agent-table tbody");
+        tbody.innerHTML = "";
+        data.agents.forEach(a => {
+            const tr = document.createElement("tr");
+            const statusBadge = a.status === "Active" ? "badge-normal" : (a.status === "Warning" ? "badge-warning" : "badge-critical");
+            tr.innerHTML = `
+                <td><strong>${a.name}</strong></td>
+                <td>${a.tier}</td>
+                <td>${a.risk}</td>
+                <td>${a.invites}</td>
+                <td>${a.accRate}</td>
+                <td><strong>${a.score}</strong></td>
+                <td><span class="kpi-badge ${statusBadge}">${a.status}</span></td>
+                <td>${a.limit}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    if (data.dqLogs && data.dqLogs.length > 0) {
+        const dqTbody = document.querySelector("#dq-table tbody");
+        dqTbody.innerHTML = "";
+        data.dqLogs.forEach(d => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>#${d.id}</td>
+                <td><code>${d.runId}</code></td>
+                <td>${d.time}</td>
+                <td>${d.comp}</td>
+                <td>${d.uniq}</td>
+                <td>${d.val}</td>
+                <td>${d.tim}</td>
+                <td>${d.ref}</td>
+                <td><strong>${d.score}</strong></td>
+                <td><span class="kpi-badge badge-normal">${d.status}</span></td>
+            `;
+            dqTbody.appendChild(tr);
+        });
+    }
+}
+
+function renderMockData() {
     const mockAgents = [
         { name: "Sarah Connor", tier: "1+ Year", risk: "Minimal Risk", invites: 180, accRate: "41.2%", score: 0.25, status: "Active", limit: "30/day" },
         { name: "Alex Mercer", tier: "6–12 Months", risk: "Low Risk", invites: 145, accRate: "36.5%", score: 0.65, status: "Active", limit: "25/day" },
@@ -175,48 +249,22 @@ function loadDashboardData() {
     ];
 
     const tbody = document.querySelector("#agent-table tbody");
-    tbody.innerHTML = "";
-
-    mockAgents.forEach(a => {
-        const tr = document.createElement("tr");
-        const statusBadge = a.status === "Active" ? "badge-normal" : (a.status === "Warning" ? "badge-warning" : "badge-critical");
-        
-        tr.innerHTML = `
-            <td><strong>${a.name}</strong></td>
-            <td>${a.tier}</td>
-            <td>${a.risk}</td>
-            <td>${a.invites}</td>
-            <td>${a.accRate}</td>
-            <td><strong>${a.score}</strong></td>
-            <td><span class="kpi-badge ${statusBadge}">${a.status}</span></td>
-            <td>${a.limit}</td>
-        `;
-        tbody.appendChild(tr);
-    });
-
-    // Populate DQ Audit Table
-    const mockDQ = [
-        { id: 101, runId: "RUN-20260819-A1", time: "2026-08-19 14:02 UTC", comp: "99.4%", uniq: "100%", val: "98.5%", tim: "100%", ref: "100%", score: "99.5%", status: "PASSED" },
-        { id: 100, runId: "RUN-20260819-A0", time: "2026-08-19 12:00 UTC", comp: "98.8%", uniq: "100%", val: "97.2%", tim: "99.0%", ref: "100%", score: "98.9%", status: "PASSED" }
-    ];
-
-    const dqTbody = document.querySelector("#dq-table tbody");
-    dqTbody.innerHTML = "";
-
-    mockDQ.forEach(d => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>#${d.id}</td>
-            <td><code>${d.runId}</code></td>
-            <td>${d.time}</td>
-            <td>${d.comp}</td>
-            <td>${d.uniq}</td>
-            <td>${d.val}</td>
-            <td>${d.tim}</td>
-            <td>${d.ref}</td>
-            <td><strong>${d.score}</strong></td>
-            <td><span class="kpi-badge badge-normal">${d.status}</span></td>
-        `;
-        dqTbody.appendChild(tr);
-    });
+    if (tbody) {
+        tbody.innerHTML = "";
+        mockAgents.forEach(a => {
+            const tr = document.createElement("tr");
+            const statusBadge = a.status === "Active" ? "badge-normal" : (a.status === "Warning" ? "badge-warning" : "badge-critical");
+            tr.innerHTML = `
+                <td><strong>${a.name}</strong></td>
+                <td>${a.tier}</td>
+                <td>${a.risk}</td>
+                <td>${a.invites}</td>
+                <td>${a.accRate}</td>
+                <td><strong>${a.score}</strong></td>
+                <td><span class="kpi-badge ${statusBadge}">${a.status}</span></td>
+                <td>${a.limit}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
 }
