@@ -1,0 +1,159 @@
+// ===============================================================================
+// POLLUXA LINKEDIN AGENT ANALYTICS PLATFORM - DAX MEASURE LIBRARY
+// Strictly Explicit DAX Measures (No implicit aggregations used)
+// ===============================================================================
+
+// -------------------------------------------------------------------------------
+// 1. CORE KPIS & VOLUME MEASURES
+// -------------------------------------------------------------------------------
+
+Total Invites Sent = 
+SUM('fact_daily_agent_summary'[invites_sent])
+
+Total Accepts Received = 
+SUM('fact_daily_agent_summary'[accepts_received])
+
+Total Messages Sent = 
+SUM('fact_daily_agent_summary'[messages_sent])
+
+Total Replies Received = 
+SUM('fact_daily_agent_summary'[replies_received])
+
+Total Ghosted Leads = 
+SUM('fact_daily_agent_summary'[ghosted_count])
+
+Overall Acceptance Rate = 
+DIVIDE(
+    [Total Accepts Received],
+    [Total Invites Sent],
+    0.0
+)
+
+Overall Reply Rate = 
+DIVIDE(
+    [Total Replies Received],
+    [Total Messages Sent],
+    0.0
+)
+
+Overall Conversion Rate = 
+DIVIDE(
+    [Total Replies Received],
+    [Total Invites Sent],
+    0.0
+)
+
+Average Response Time (Hours) = 
+DIVIDE(
+    AVERAGE('fact_outreach_activity'[response_time_seconds]),
+    3600,
+    0.0
+)
+
+// -------------------------------------------------------------------------------
+// 2. ACCOUNT HEALTH & UTILIZATION MEASURES
+// -------------------------------------------------------------------------------
+
+Active Agent Count = 
+CALCULATE(
+    COUNTROWS('dim_agent'),
+    'dim_agent'[status] = "Active",
+    'dim_agent'[is_current] = TRUE()
+)
+
+Paused Agent Count = 
+CALCULATE(
+    COUNTROWS('dim_agent'),
+    'dim_agent'[status] = "Paused",
+    'dim_agent'[is_current] = TRUE()
+)
+
+Ghosted Agent Count = 
+CALCULATE(
+    COUNTROWS('dim_agent'),
+    'dim_agent'[status] = "Ghosted",
+    'dim_agent'[is_current] = TRUE()
+)
+
+Average Invite Capacity Utilization % = 
+AVERAGE('fact_daily_agent_summary'[invite_utilization_pct])
+
+Average Message Capacity Utilization % = 
+AVERAGE('fact_daily_agent_summary'[message_utilization_pct])
+
+Capacity Utilization Status = 
+SWITCH(
+    TRUE(),
+    [Average Invite Capacity Utilization %] >= 0.90, "Over-Utilized (Risk of Shadow-Ban)",
+    [Average Invite Capacity Utilization %] >= 0.60, "Optimal Utilization",
+    "Under-Utilized"
+)
+
+// -------------------------------------------------------------------------------
+// 3. RISK INTELLIGENCE & ANOMALY MEASURES
+// -------------------------------------------------------------------------------
+
+Average Anomaly Score = 
+AVERAGE('fact_daily_agent_summary'[anomaly_score])
+
+Critical Risk Agent Count = 
+CALCULATE(
+    DISTINCTCOUNT('fact_daily_agent_summary'[agent_sk]),
+    'fact_daily_agent_summary'[risk_flag] = "Critical"
+)
+
+Warning Risk Agent Count = 
+CALCULATE(
+    DISTINCTCOUNT('fact_daily_agent_summary'[agent_sk]),
+    'fact_daily_agent_summary'[risk_flag] = "Warning"
+)
+
+Account Health Risk Status = 
+VAR MaxScore = MAX('fact_daily_agent_summary'[anomaly_score])
+RETURN
+    SWITCH(
+        TRUE(),
+        MaxScore >= 2.5, "CRITICAL RISK (Throttle Immediately)",
+        MaxScore >= 1.5, "WARNING (Monitor High Decay)",
+        "HEALTHY"
+    )
+
+Recommended Daily Invite Limit = 
+SUM('fact_daily_agent_summary'[recommended_invite_capacity])
+
+Recommended Daily Message Limit = 
+SUM('fact_daily_agent_summary'[recommended_message_capacity])
+
+// -------------------------------------------------------------------------------
+// 4. DATA QUALITY & GOVERNANCE MEASURES
+// -------------------------------------------------------------------------------
+
+Latest Composite DQ Score = 
+CALCULATE(
+    LASTNONBLANK('dq_check_history'[composite_dq_score], 1),
+    TOPN(1, ALL('dq_check_history'), 'dq_check_history'[check_timestamp], DESC)
+)
+
+Data Quality SLA Status = 
+IF(
+    [Latest Composite DQ Score] >= 0.90,
+    "PASSED SLA (>= 90%)",
+    "FAILED SLA (< 90%)"
+)
+
+Total Dead Letter Records = 
+COUNTROWS('dead_letter_queue')
+
+// -------------------------------------------------------------------------------
+// 5. CAMPAIGN ROI & SEGMENT PERFORMANCE
+// -------------------------------------------------------------------------------
+
+Campaign Conversion Rate = 
+DIVIDE(
+    CALCULATE(COUNTROWS('fact_outreach_activity'), 'fact_outreach_activity'[action_type] = "reply"),
+    CALCULATE(COUNTROWS('fact_outreach_activity'), 'fact_outreach_activity'[action_type] = "invite"),
+    0.0
+)
+
+Campaign ROI Index = 
+[Campaign Conversion Rate] * 100
