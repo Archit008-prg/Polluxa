@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  analytics-pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: linkedin_analytics_pipeline
+    env_file:
+      - .env.example
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=sqlite:////app/data/linkedin_analytics.db
+    volumes:
+      - analytics_data:/app/data
+    restart: unless-stopped
+
+  mock-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: polluxa_mock_api
+    command: uvicorn src.api.mock_polluxa_api:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+volumes:
+  analytics_data:
